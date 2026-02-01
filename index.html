@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>UNTIRTA COMMAND CENTER - IDENTITY OPS v7</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Rajdhani', sans-serif;
@@ -22,6 +22,7 @@
         }
         .font-hud { font-family: 'Orbitron', sans-serif; }
         .font-mono-tech { font-family: 'Share Tech Mono', monospace; }
+        
         .glass-panel {
             background: rgba(15, 23, 42, 0.92);
             backdrop-filter: blur(10px);
@@ -33,6 +34,60 @@
         #boot-screen { background: #000; z-index: 9999; transition: opacity 1s ease-out; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .urgent-pulse { animation: pulse-border 1.5s infinite; }
+        
+        /* --- CSS TUTORIAL FINAL --- */
+        .tutorial-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9000;
+            display: none; opacity: 0; transition: opacity 0.5s;
+        }
+        .tutorial-active .tutorial-overlay { display: block; opacity: 1; }
+        
+        .tutorial-highlight {
+            position: relative; z-index: 9001;
+            /* Highlight effect yang kuat tapi tidak menyilaukan */
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.9), 0 0 100px rgba(14, 165, 233, 0.5);
+            background-color: rgba(2, 6, 23, 0.95);
+            border-radius: 8px;
+            transition: all 0.5s ease;
+        }
+
+        .tutorial-box {
+            position: absolute; z-index: 9002; 
+            width: 92%; /* Lebar hampir penuh di HP */
+            max-width: 400px; /* Batas lebar di Desktop */
+            background: #0b1120; /* Dark Blue Solid */
+            border: 1px solid #38bdf8;
+            border-top: 4px solid #38bdf8; /* Aksen atas */
+            padding: 20px; 
+            border-radius: 8px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+            transition: all 0.4s ease-in-out; /* Animasi smooth */
+            pointer-events: auto;
+        }
+
+        /* Teks yang sangat jelas terbaca */
+        .tutorial-readability {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+            font-size: 15px !important;
+            line-height: 1.6 !important;
+            color: #ffffff !important;
+            letter-spacing: normal !important;
+            margin-bottom: 20px;
+        }
+
+        .tutorial-arrow {
+            position: absolute; width: 20px; height: 20px; background: #0b1120;
+            transform: rotate(45deg);
+            border-left: 1px solid #38bdf8;
+            border-top: 1px solid #38bdf8;
+            z-index: 9003;
+            /* Sembunyikan panah di HP karena posisi floating */
+            display: none;
+        }
+        @media (min-width: 768px) {
+            .tutorial-arrow { display: block; }
+        }
+
         @keyframes pulse-border {
             0% { border-color: rgba(239, 68, 68, 0.4); box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.1); }
             50% { border-color: rgba(239, 68, 68, 1); box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.3); }
@@ -49,6 +104,26 @@
     <audio id="sfx-modal" src="https://assets.mixkit.co/active_storage/sfx/2567/2567-preview.mp3"></audio>
     <audio id="sfx-error" src="https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3"></audio>
     <audio id="sfx-ding" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+    <audio id="sfx-type" src="https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3"></audio>
+
+    <div id="tutorial-layer" class="tutorial-overlay">
+        <div id="tutorial-tooltip" class="tutorial-box hidden">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+                <h3 id="tut-title" class="font-hud text-sky-400 text-sm uppercase tracking-widest font-bold">INFO</h3>
+                <span class="text-[10px] text-white font-mono-tech bg-sky-600 px-2 py-0.5 rounded-full" id="tut-step-count">1/5</span>
+            </div>
+            
+            <p id="tut-text" class="tutorial-readability">
+                Initializing training module...
+            </p>
+            
+            <div class="flex justify-between items-center gap-4">
+                <button onclick="endTutorial()" class="text-xs text-gray-400 hover:text-white underline py-2">Skip Tutorial</button>
+                <button onclick="nextTutorialStep()" class="flex-1 bg-sky-500 hover:bg-sky-400 text-white text-sm font-bold py-3 rounded shadow-lg transition active:scale-95 text-center tracking-wide">LANJUT</button>
+            </div>
+            <div id="tut-arrow" class="tutorial-arrow"></div>
+        </div>
+    </div>
 
     <div id="boot-screen" class="fixed inset-0 flex flex-col items-center justify-center text-center p-4">
         <div id="audio-unlocker" class="flex flex-col items-center">
@@ -87,9 +162,9 @@
             </div>
         </div>
 
-        <header class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-sky-900/50 pb-4 gap-4">
+        <header id="header-section" class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-sky-900/50 pb-4 gap-4">
             <div class="flex items-center gap-4 w-full md:w-auto">
-                <div class="relative shrink-0">
+                <div class="relative shrink-0" id="avatar-container">
                     <div class="w-16 h-16 md:w-20 md:h-20 bg-sky-950 rounded-full flex items-center justify-center border-2 border-sky-400 shadow-[0_0_15px_#0ea5e9]">
                         <span id="avatar-initials" class="font-hud text-2xl md:text-3xl font-bold text-white">??</span>
                     </div>
@@ -113,11 +188,11 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
             <div class="lg:col-span-4 space-y-4 md:space-y-6 order-2 lg:order-1">
-                <div class="glass-panel p-4 rounded-lg">
+                <div class="glass-panel p-4 rounded-lg" id="xp-panel">
                     <div class="flex justify-between text-[10px] font-hud mb-1.5 text-sky-400"><span>EXP PROGRESS</span><span id="xp-text" class="text-white">0 / 1000</span></div>
                     <div class="w-full bg-black/60 h-3 rounded-full border border-sky-900/50 overflow-hidden"><div id="xp-bar" class="bg-sky-500 h-full transition-all duration-500 shadow-[0_0_10px_#0ea5e9]" style="width: 0%"></div></div>
                 </div>
-                <div class="glass-panel p-4 rounded-lg border-t-2 border-t-sky-500">
+                <div class="glass-panel p-4 rounded-lg border-t-2 border-t-sky-500" id="active-missions-panel">
                     <div class="flex justify-between items-center mb-3 pb-2 border-b border-sky-900/50">
                         <h2 class="font-hud text-xs text-sky-400 uppercase tracking-wider">Active Missions</h2>
                         <button onclick="toggleHistory(true)" onmouseover="playSFX('sfx-hover')" class="text-[10px] bg-sky-900/40 text-sky-200 px-2 py-1 rounded border border-sky-700/50 hover:bg-sky-600 transition">History</button>
@@ -129,7 +204,8 @@
             <div class="lg:col-span-8 space-y-4 md:space-y-6 order-1 lg:order-2">
                 <div class="glass-panel p-2 rounded-lg flex overflow-x-auto gap-2 scrollbar-hide snap-x" id="day-tabs"></div>
                 <div id="mission-container" class="grid gap-3 md:gap-4"></div>
-                <div class="glass-panel p-4 md:p-6 rounded-lg border border-dashed border-sky-700/50">
+                
+                <div class="glass-panel p-4 md:p-6 rounded-lg border border-dashed border-sky-700/50" id="homework-input-panel">
                     <h3 class="font-hud text-sky-400 mb-4 text-xs md:text-sm uppercase tracking-widest flex items-center gap-2"><span class="text-green-400 animate-pulse">●</span> Tugas Pekerjaan Rumah</h3>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
                         <div class="md:col-span-6"><input type="text" id="q-title" onfocus="playSFX('sfx-hover')" placeholder="Mission Objective..." class="w-full bg-black/40 border border-sky-800 p-3 rounded text-sm text-white focus:border-sky-400 outline-none"></div>
@@ -142,6 +218,7 @@
     </div>
 
     <script>
+        // --- DATA & CONFIG ---
         const scheduleData = [
             { day: "Senin", name: "Hidrolik dan Pneumatik", time: "10:30 - 12:10", room: "Lab Z3. Mesin.1", lecturer: "Ade Dwi P.J." },
             { day: "Senin", name: "Pemeriksaan Dan Pengujian Bahan", time: "13:00 - 14:40", room: "Lab Z3. Mesin.1", lecturer: "Ananda Y.W.P" },
@@ -150,7 +227,7 @@
             { day: "Rabu", name: "Teknik Otomasi", time: "09:20 - 11:00", room: "RK CC.416", lecturer: "Ananda Y.W.P" },
             { day: "Rabu", name: "Elemen Mesin Lanjut", time: "13:00 - 14:40", room: "RK CC.416", lecturer: "Deddy Supriyatna" },
             { day: "Kamis", name: "Fabrikasi Logam", time: "07:30 - 09:10", room: "RK CC.416", lecturer: "Ananda Y.W.P" },
-            { day: "Kamis", name: "Mesin Konversi Energi", time: "09:20 - 11:00", room: "RK CC.417", lecturer: "Rusdi Febriyanto" },
+            { day: "Kamis", name: "Mesin Konversi Energi", time: "09:20 - 11:00", room: "RK CC.417", lecturer: "Deddy Supriyatna" },
             { day: "Kamis", name: "Pend. Kewirausahaan", time: "13:00 - 14:40", room: "RK CC.416", lecturer: "Dr. Moh. Fawaid" },
             { day: "Jumat", name: "Evaluasi Pembelajaran", time: "09:20 - 11:00", room: "RK CC.416", lecturer: "Ikhsanudin" },
             { day: "Jumat", name: "PLP 1", time: "14:40 - 15:30", room: "Lab Z3. Mesin.1", lecturer: "Ade Dwi P.J." },
@@ -160,29 +237,27 @@
         let playerStats = JSON.parse(localStorage.getItem('teguh_stats')) || { xp: 0, lvl: 1 };
         let quests = JSON.parse(localStorage.getItem('teguh_v4_quests')) || [];
         let playerNickname = localStorage.getItem('teguh_nickname');
+        let isFirstTime = false; 
+
         const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
         let currentDayFilter = days[new Date().getDay()] === "Minggu" || days[new Date().getDay()] === "Sabtu" ? "Senin" : days[new Date().getDay()];
 
+        // --- AUDIO SYSTEM ---
         function playSFX(id) { const s = document.getElementById(id); if(s) { s.currentTime=0; s.play().catch(()=>{}); } }
 
         function systemSpeak(text) {
-            const synth = window.speechSynthesis;
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = 'id-ID'; 
-            
-            // SYSTEM SETTINGS: DRACIN / SCI-FI MODE
-            // Nada lebih tinggi (1.2) dan sedikit cepat (1.05) untuk kesan "System AI" yang jernih dan tegas.
-            utter.pitch = 1.43;
-            utter.rate = 1.1; 
-            
-            playSFX('sfx-ding');
-            
-            setTimeout(() => { 
-                synth.speak(utter); 
-                utter.onend = () => playSFX('sfx-ding');
-            }, 500);
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = 'id-ID'; 
+                utter.pitch = 1.2;
+                utter.rate = 1.1; 
+                playSFX('sfx-ding');
+                setTimeout(() => { window.speechSynthesis.speak(utter); }, 500);
+            }
         }
 
+        // --- BOOT SEQUENCE ---
         function startBootSequence() {
             document.getElementById('audio-unlocker').classList.add('hidden');
             playSFX('sfx-click');
@@ -211,7 +286,9 @@
         function initializeSystem() {
             const name = document.getElementById('nickname-input').value.trim().toUpperCase();
             if (!name) return playSFX('sfx-error');
-            playerNickname = name; localStorage.setItem('teguh_nickname', playerNickname);
+            playerNickname = name; 
+            localStorage.setItem('teguh_nickname', playerNickname);
+            isFirstTime = true; 
             document.getElementById('login-container').classList.add('hidden');
             runLoader();
         }
@@ -221,21 +298,183 @@
             setTimeout(() => {
                 document.getElementById('boot-screen').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('opacity-0');
+                
                 renderTabs(); renderMissions(); renderActiveQuests(); updateHUD();
                 document.getElementById('user-nickname').innerText = playerNickname;
                 document.getElementById('avatar-initials').innerText = playerNickname.substring(0,2);
                 
                 const today = days[new Date().getDay()];
                 const filtered = scheduleData.filter(item => item.day === today);
-                let msg = filtered.length > 0 ? `Jadwal operasional hari ini ${today} adalah: ` + filtered.map(i => i.name).join(', ') : `Tidak ada mata kuliah terjadwal hari ini.Dikarenakan libur,selamat beristirahat`;
-                systemSpeak(`Otorisasi diterima. Selamat datang kembali, Tuan ${playerNickname}. ${msg}`);
+                let msg = filtered.length > 0 ? `Jadwal operasional hari ini ${today} adalah: ` + filtered.map(i => i.name).join(', ') : `Tidak ada mata kuliah terjadwal hari ini.`;
+                
+                if(isFirstTime || !localStorage.getItem('tutorial_complete')) {
+                    setTimeout(() => startTutorial(), 1000); 
+                } else {
+                    systemSpeak(`Otorisasi diterima. Selamat datang kembali, Tuan ${playerNickname}. ${msg}`);
+                }
             }, 1000);
         }
 
+        // --- TUTORIAL SYSTEM LOGIC (MOBILE DOCKING SYSTEM) ---
+        const tutorialSteps = [
+            { 
+                target: 'header-section', 
+                title: "IDENTITAS OPERATOR", 
+                text: "Ini adalah Panel Profil Anda. Level akan naik setiap kali Anda menyelesaikan tugas.",
+                pos: 'bottom' 
+            },
+            { 
+                target: 'day-tabs', 
+                title: "PILIH HARI", 
+                text: "Klik nama hari di sini untuk melihat jadwal Mata Kuliah yang berbeda.",
+                pos: 'bottom' 
+            },
+            { 
+                target: 'mission-container', 
+                title: "KARTU MISI", 
+                text: "Jadwal kuliah akan muncul di sini. Cek waktu dan ruangannya agar tidak terlambat.",
+                pos: 'top' 
+            },
+            { 
+                target: 'homework-input-panel', 
+                title: "INPUT TUGAS", 
+                text: "Punya PR? Masukkan judul dan tanggal di sini, lalu tekan EXECUTE.",
+                pos: 'top' 
+            },
+            { 
+                target: 'active-missions-panel', 
+                title: "DAFTAR TUGAS", 
+                text: "Tugas yang sedang berjalan ada di sini. Klik Centang (✓) jika sudah selesai.",
+                pos: 'right' 
+            }
+        ];
+
+        let currentStep = 0;
+
+        function startTutorial() {
+            document.body.classList.add('tutorial-active');
+            playSFX('sfx-modal');
+            currentStep = 0;
+            showTutorialStep(0);
+        }
+
+        function showTutorialStep(index) {
+            if (index >= tutorialSteps.length) {
+                endTutorial();
+                return;
+            }
+
+            const step = tutorialSteps[index];
+            const targetEl = document.getElementById(step.target);
+            const box = document.getElementById('tutorial-tooltip');
+            const arrow = document.getElementById('tut-arrow');
+            
+            // 1. Highlight Target
+            document.querySelectorAll('.tutorial-highlight').forEach(el => el.classList.remove('tutorial-highlight'));
+            targetEl.classList.add('tutorial-highlight');
+            targetEl.scrollIntoView({behavior: "smooth", block: "center"});
+
+            // 2. Isi Konten
+            document.getElementById('tut-title').innerText = step.title;
+            document.getElementById('tut-step-count').innerText = `${index + 1}/${tutorialSteps.length}`;
+            document.getElementById('tut-text').innerText = step.text;
+            box.classList.remove('hidden');
+
+            playSFX('sfx-type');
+
+            // 3. LOGIKA POSISI (MOBILE DOCKING)
+            // Di HP, kita tidak menaruh box di sebelah elemen (karena sempit).
+            // Kita menaruh box di ATAS layar atau BAWAH layar, tergantung posisi elemen target.
+            
+            const rect = targetEl.getBoundingClientRect();
+            
+            if (window.innerWidth < 768) {
+                // --- MODE MOBILE ---
+                box.style.left = "4%"; // Margin kiri 4%
+                box.style.width = "92%"; // Lebar 92%
+                box.style.transform = "none";
+                arrow.style.display = 'none'; // Sembunyikan panah di HP
+                
+                const screenMiddle = window.innerHeight / 2;
+                const targetMiddle = rect.top + (rect.height / 2);
+
+                if (targetMiddle > screenMiddle) {
+                    // Target ada di BAWAH -> Box taruh di ATAS
+                    box.style.top = "100px"; 
+                    box.style.bottom = "auto";
+                } else {
+                    // Target ada di ATAS -> Box taruh di BAWAH
+                    box.style.top = "auto";
+                    box.style.bottom = "40px";
+                }
+
+            } else {
+                // --- MODE DESKTOP ---
+                arrow.style.display = 'block';
+                
+                let top, left;
+                const boxWidth = 350; // Lebar fix desktop
+                const offset = boxWidth / 2;
+                box.style.width = `${boxWidth}px`;
+
+                if (step.pos === 'bottom') {
+                    top = rect.bottom + 20;
+                    left = rect.left + (rect.width / 2) - offset;
+                    arrow.style.top = "-9px"; arrow.style.left = "50%"; arrow.style.marginLeft = "-9px"; arrow.style.bottom = "auto";
+                    arrow.style.transform = "rotate(45deg)";
+                } else if (step.pos === 'top') {
+                    top = rect.top - box.offsetHeight - 20;
+                    if (top < 10) top = rect.bottom + 20; // Flip jika mentok atas
+                    left = rect.left + (rect.width / 2) - offset;
+                    arrow.style.bottom = "-9px"; arrow.style.left = "50%"; arrow.style.marginLeft = "-9px"; arrow.style.top = "auto";
+                    arrow.style.transform = "rotate(225deg)";
+                } else if (step.pos === 'right') {
+                    top = rect.top;
+                    left = rect.right + 20;
+                    arrow.style.left = "-9px"; arrow.style.top = "20px"; arrow.style.marginLeft = "0";
+                    arrow.style.transform = "rotate(135deg)";
+                }
+
+                // Cek agar tidak keluar layar kanan/kiri di desktop
+                if (left < 10) left = 10;
+                if (left + boxWidth > window.innerWidth - 10) { 
+                    left = window.innerWidth - boxWidth - 20;
+                    // Geser panah agar tetap menunjuk target meski box geser
+                    let arrowLeft = (rect.left + rect.width/2) - left;
+                    if(arrowLeft > 10 && arrowLeft < boxWidth - 10) {
+                        arrow.style.left = `${arrowLeft}px`;
+                        arrow.style.marginLeft = "-9px";
+                    }
+                }
+                if (top < 10) top = 10;
+                
+                box.style.top = `${top}px`;
+                box.style.left = `${left}px`;
+            }
+        }
+
+        function nextTutorialStep() {
+            playSFX('sfx-click');
+            currentStep++;
+            showTutorialStep(currentStep);
+        }
+
+        function endTutorial() {
+            document.body.classList.remove('tutorial-active');
+            document.querySelectorAll('.tutorial-highlight').forEach(el => el.classList.remove('tutorial-highlight'));
+            document.getElementById('tutorial-tooltip').classList.add('hidden');
+            localStorage.setItem('tutorial_complete', 'true');
+            playSFX('sfx-success');
+            systemSpeak("Training selesai. Sistem siap digunakan.");
+        }
+
+        // --- CORE FUNCTIONS ---
         function updateHUD() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
-            if (playerStats.xp >= 1000) { playerStats.lvl += 1; playerStats.xp -= 1000; playSFX('sfx-success'); }
+            if (playerStats.xp >= 1000) { 
+                playerStats.lvl += 1; playerStats.xp -= 1000; playSFX('sfx-success'); alert(`LEVEL UP! YOU ARE NOW LEVEL ${playerStats.lvl}`);
+            }
             document.getElementById('player-level').innerText = playerStats.lvl; 
             document.getElementById('xp-text').innerText = `${playerStats.xp} / 1000`; 
             document.getElementById('xp-bar').style.width = `${(playerStats.xp / 1000) * 100}%`;
@@ -260,7 +499,7 @@
             if(filtered.length === 0) { container.innerHTML = '<div class="text-center text-xs text-gray-600 py-6 border border-dashed border-gray-800 rounded">NO OPERATIONS SCHEDULED</div>'; return; }
             filtered.forEach(item => {
                 const card = document.createElement('div'); 
-                card.className = "glass-panel p-4 rounded-lg border-l-[3px] border-l-sky-500 flex flex-col relative group transition-transform";
+                card.className = "glass-panel p-4 rounded-lg border-l-[3px] border-l-sky-500 flex flex-col relative group transition-transform hover:scale-[1.01]";
                 card.onmouseover = () => playSFX('sfx-hover');
                 card.innerHTML = `<div class="flex justify-between items-start mb-2"><div><h3 class="text-lg font-bold font-hud text-white mt-1">${item.name}</h3></div><div class="text-right"><div class="text-sky-300 font-hud text-lg">${item.time}</div></div></div><div class="flex justify-between items-end mt-2 pt-2 border-t border-sky-900/30"><span class="text-[10px] text-sky-600 font-bold uppercase truncate">${item.lecturer}</span><span class="text-[9px] bg-sky-900 text-sky-200 px-2 py-0.5 rounded border border-sky-700 font-bold uppercase">📍 ${item.room.replace('Ruang Kuliah', 'RK')}</span></div>`;
                 container.appendChild(card);
@@ -310,9 +549,7 @@
             history.forEach(q => { container.innerHTML += `<div class="p-3 rounded border border-green-900/30 bg-green-950/10 flex justify-between items-center mb-2"><div><div class="text-xs text-gray-400 line-through">${q.title}</div><div class="text-[9px] text-green-700 mt-0.5">Resolved: ${q.completedAt}</div></div></div>`; });
         }
         function clearHistory() { if(confirm("Purge all logs?")) { playSFX('sfx-error'); quests = quests.filter(q => q.status !== 'completed'); saveAndRender(); } }
-        function changeNickname() { const n = prompt("RE-INITIALIZE IDENTITY:", playerNickname); if (n && n.trim() !== "") { playerNickname = n.trim().toUpperCase(); localStorage.setItem('teguh_nickname', playerNickname); enterApp(); } }
+        function changeNickname() { const n = prompt("RE-INITIALIZE IDENTITY:", playerNickname); if (n && n.trim() !== "") { playerNickname = n.trim().toUpperCase(); localStorage.setItem('teguh_nickname', playerNickname); location.reload(); } }
     </script>
 </body>
 </html>
-
-
