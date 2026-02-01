@@ -305,7 +305,7 @@
                 
                 const today = days[new Date().getDay()];
                 const filtered = scheduleData.filter(item => item.day === today);
-                let msg = filtered.length > 0 ? `Jadwal operasional hari ini ${today} adalah: ` + filtered.map(i => i.name).join(', ') : `Tidak ada mata kuliah terjadwal hari ini.`;
+                let msg = filtered.length > 0 ? `Jadwal operasional hari ini ${today} adalah: ` + filtered.map(i => i.name).join(', ') : `Tidak ada mata kuliah terjadwal hari ini.Dikarenakan libur,selamat beristirahat`;
                 
                 if(isFirstTime || !localStorage.getItem('tutorial_complete')) {
                     setTimeout(() => startTutorial(), 1000); 
@@ -553,3 +553,4 @@
     </script>
 </body>
 </html>
+
