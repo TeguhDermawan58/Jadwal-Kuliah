@@ -222,13 +222,13 @@
         const scheduleData = [
             { day: "Senin", name: "Hidrolik dan Pneumatik", time: "10:30 - 12:10", room: "Lab Z3. Mesin.1", lecturer: "Ade Dwi P.J." },
             { day: "Senin", name: "Pemeriksaan Dan Pengujian Bahan", time: "13:00 - 14:40", room: "Lab Z3. Mesin.1", lecturer: "Ananda Y.W.P" },
+            { day: "Selasa", name: "Pend. Kewirausahaan", time: "7:30 - 9:10", room: "RK CC.416", lecturer: "Dr. Moh. Fawaid" },
             { day: "Selasa", name: "CNC & CAM", time: "13:00 - 15:30", room: "Lab Z3. Mesin.1", lecturer: "Ricky Cahyasari P." },
             { day: "Rabu", name: "Pemesinan Lanjut", time: "07:30 - 09:10", room: "Lab Z3. Mesin.1", lecturer: "Ricky Cahyasari P." },
             { day: "Rabu", name: "Teknik Otomasi", time: "09:20 - 11:00", room: "RK CC.416", lecturer: "Ananda Y.W.P" },
             { day: "Rabu", name: "Elemen Mesin Lanjut", time: "13:00 - 14:40", room: "RK CC.416", lecturer: "Deddy Supriyatna" },
             { day: "Kamis", name: "Fabrikasi Logam", time: "07:30 - 09:10", room: "RK CC.416", lecturer: "Ananda Y.W.P" },
-            { day: "Kamis", name: "Mesin Konversi Energi", time: "09:20 - 11:00", room: "RK CC.417", lecturer: " Rusdi Febriyanto" },
-            { day: "Kamis", name: "Pend. Kewirausahaan", time: "13:00 - 14:40", room: "RK CC.416", lecturer: "Dr. Moh. Fawaid" },
+            { day: "Kamis", name: "Mesin Konversi Energi", time: "09:20 - 11:00", room: "RK CC.417", lecturer: "Deddy Supriyatna" },
             { day: "Jumat", name: "Evaluasi Pembelajaran", time: "09:20 - 11:00", room: "RK CC.416", lecturer: "Ikhsanudin" },
             { day: "Jumat", name: "PLP 1", time: "14:40 - 15:30", room: "Lab Z3. Mesin.1", lecturer: "Ade Dwi P.J." },
             { day: "Jumat", name: "Desain & Analisis Data", time: "15:20 - 17:00", room: "RK CC.416", lecturer: "Ikhsanudin" }
@@ -305,7 +305,7 @@
                 
                 const today = days[new Date().getDay()];
                 const filtered = scheduleData.filter(item => item.day === today);
-                let msg = filtered.length > 0 ? `Jadwal operasional hari ini ${today} adalah: ` + filtered.map(i => i.name).join(', ') : `Tidak ada mata kuliah terjadwal hari ini.Dikarenakan libur,selamat beristirahat`;
+                let msg = filtered.length > 0 ? `Jadwal operasional hari ini ${today} adalah: ` + filtered.map(i => i.name).join(', ') : `Tidak ada mata kuliah terjadwal hari ini.`;
                 
                 if(isFirstTime || !localStorage.getItem('tutorial_complete')) {
                     setTimeout(() => startTutorial(), 1000); 
@@ -553,5 +553,3 @@
     </script>
 </body>
 </html>
-
-
