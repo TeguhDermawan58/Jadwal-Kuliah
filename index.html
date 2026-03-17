@@ -62,6 +62,22 @@
         .new-task-flash { animation: flash-in 0.5s ease-out; }
         @keyframes flash-in { from { background: rgba(34,197,94,0.2); } to { background: transparent; } }
 
+        /* --- TAB TASK BADGE --- */
+        .tab-task-badge {
+            position: absolute; top: -6px; right: -6px;
+            background: #ef4444; color: white;
+            font-size: 9px; font-weight: bold; font-family: 'Orbitron', sans-serif;
+            min-width: 16px; height: 16px; border-radius: 999px;
+            display: flex; align-items: center; justify-content: center;
+            border: 1.5px solid #020617;
+            box-shadow: 0 0 6px rgba(239,68,68,0.8);
+            padding: 0 3px;
+            animation: badge-pop 0.3s ease-out;
+        }
+        @keyframes badge-pop {
+            from { transform: scale(0); } to { transform: scale(1); }
+        }
+
         /* --- TUTORIAL CSS --- */
         .tutorial-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9000;
@@ -385,15 +401,44 @@
             localStorage.setItem('teguh_stats', JSON.stringify(playerStats));
         } setInterval(updateHUD, 1000);
 
+        // Simpan jumlah tugas per hari (diupdate dari Firebase)
+        let taskCountPerDay = {};
+
         function renderTabs() {
             const container = document.getElementById('day-tabs'); container.innerHTML = '';
             days.slice(1,6).forEach(day => {
                 const btn = document.createElement('button');
-                btn.className = `whitespace-nowrap px-5 py-2 rounded-md font-hud text-[11px] uppercase border transition ${currentDayFilter === day ? 'tab-active' : 'border-sky-900/50 text-sky-600'}`;
+                btn.className = `relative whitespace-nowrap px-5 py-2 rounded-md font-hud text-[11px] uppercase border transition ${currentDayFilter === day ? 'tab-active' : 'border-sky-900/50 text-sky-600'}`;
                 btn.innerText = day;
                 btn.onclick = () => { currentDayFilter = day; playSFX('sfx-click'); renderTabs(); renderMissions(); };
+
+                // Tambah badge merah kalau ada tugas di hari itu
+                const count = taskCountPerDay[day] || 0;
+                if (count > 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'tab-task-badge';
+                    badge.innerText = count > 99 ? '99+' : count;
+                    btn.appendChild(badge);
+                }
+
                 container.appendChild(btn);
             });
+        }
+
+        // Hitung tugas per hari dari Firebase — panggil setelah loadClassTasks
+        function updateTabBadges(allTasks) {
+            // Mapping: mk_id -> hari
+            const mkDayMap = {};
+            scheduleData.forEach(item => { mkDayMap[item.id] = item.day; });
+
+            // Reset
+            taskCountPerDay = {};
+            allTasks.forEach(task => {
+                const day = mkDayMap[task.mkId];
+                if (day) taskCountPerDay[day] = (taskCountPerDay[day] || 0) + 1;
+            });
+
+            renderTabs(); // Re-render tab dengan badge terbaru
         }
 
         function renderMissions() {
@@ -716,6 +761,8 @@
             db.ref('tasks').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (!data) {
+                    taskCountPerDay = {};
+                    renderTabs();
                     container.innerHTML = '<div class="text-center text-[10px] text-gray-600 py-4">Belum ada tugas kelas</div>';
                     return;
                 }
@@ -734,6 +781,9 @@
                     if (!a.deadline) return 1; if (!b.deadline) return -1;
                     return new Date(a.deadline) - new Date(b.deadline);
                 });
+
+                // Update badge di tab hari
+                updateTabBadges(allTasks);
 
                 if (allTasks.length === 0) {
                     container.innerHTML = '<div class="text-center text-[10px] text-gray-600 py-4">Semua tugas sudah selesai 🎉</div>';
